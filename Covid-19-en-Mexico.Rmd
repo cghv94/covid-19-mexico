@@ -1,0 +1,340 @@
+---
+title: "Covid-19 en México"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+    theme: lumen
+    social: [ "twitter", "facebook", "menu"]
+    source_code: embed
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(RColorBrewer)
+library(sp)
+library(rgdal)
+library(colorspace)
+library(rgeos)
+library(DT)
+library(plotly)
+library(data.table)
+```
+
+```{r include=FALSE}
+#temp <- tempfile()
+#download.file("http://datosabiertos.salud.gob.mx/gobmx/salud/datos_abiertos/datos_abiertos_covid19.zip",temp)
+#covid0 <- read.csv(unz(temp, "200906COVID19MEXICO.csv"))
+covid0 <- fread("200906COVID19MEXICO.csv")
+covid <- filter(covid0, covid0$RESULTADO == "1")
+#covid[5]<-replace(covid[5], covid[5] == 1, "Aguascalientes")
+#covid[5]<-replace(covid[5], covid[5] == 2, "Baja California")
+#covid[5]<-replace(covid[5], covid[5] == 3, "Baja California Sur")
+#covid[5]<-replace(covid[5], covid[5] == 4, "Campeche")
+#covid[5]<-replace(covid[5], covid[5] == 5, "Coahuila de Zaragoza")
+#covid[5]<-replace(covid[5], covid[5] == 6, "Colima")
+#covid[5]<-replace(covid[5], covid[5] == 7, "Chiapas")
+#covid[5]<-replace(covid[5], covid[5] == 8, "Chihuahua")
+#covid[5]<-replace(covid[5], covid[5] == 9, "Ciudad de México")
+#covid[5]<-replace(covid[5], covid[5] == 10, "Durango")
+#covid[5]<-replace(covid[5], covid[5] == 11, "Guanajuato")
+#covid[5]<-replace(covid[5], covid[5] == 12, "Guerrero")
+#covid[5]<-replace(covid[5], covid[5] == 13, "Hidalgo")
+#covid[5]<-replace(covid[5], covid[5] == 14, "Jalisco")
+#covid[5]<-replace(covid[5], covid[5] == 15, "México")
+#covid[5]<-replace(covid[5], covid[5] == 16, "Michoacán de Ocampo")
+#covid[5]<-replace(covid[5], covid[5] == 17, "Morelos")
+#covid[5]<-replace(covid[5], covid[5] == 18, "Nayarit")
+#covid[5]<-replace(covid[5], covid[5] == 19, "Nuevo León")
+#covid[5]<-replace(covid[5], covid[5] == 20, "Oaxaca")
+#covid[5]<-replace(covid[5], covid[5] == 21, "Puebla")
+#covid[5]<-replace(covid[5], covid[5] == 22, "Querétaro")
+#covid[5]<-replace(covid[5], covid[5] == 23, "Quintana Roo")
+#covid[5]<-replace(covid[5], covid[5] == 24, "San Luis Potosí")
+#covid[5]<-replace(covid[5], covid[5] == 25, "Sinaloa")
+#covid[5]<-replace(covid[5], covid[5] == 26, "Sonora")
+#covid[5]<-replace(covid[5], covid[5] == 27, "Tabasco")
+#covid[5]<-replace(covid[5], covid[5] == 28, "Tamaulipas")
+#covid[5]<-replace(covid[5], covid[5] == 29, "Tlaxcala")
+#covid[5]<-replace(covid[5], covid[5] == 30, "Veracruz de Ignacio de la Llave")
+#covid[5]<-replace(covid[5], covid[5] == 31, "Yucatán")
+#covid[5]<-replace(covid[5], covid[5] == 32, "Zacatecas")
+covid[6]<-replace(covid[6], covid[6] == 1, "Mujer")
+covid[6]<-replace(covid[6], covid[6] == 2, "Hombre")
+covid[10]<-replace(covid[10], covid[10] == 1, "Ambulatorio")
+covid[10]<-replace(covid[10], covid[10] == 2, "Hospitalizado")
+n_confirmados <- nrow(covid)
+n_negativos <- nrow(filter(covid0, covid0$RESULTADO == 2))
+n_sospechosos <- nrow(filter(covid0, covid0$RESULTADO == 3))
+n_defunciones <- nrow(filter(covid, covid[13] != "9999-99-99"))
+n_ambulatorios <- nrow(filter(covid, covid[10] != "Ambulatorio"))
+n_hospitalizados <- nrow(filter(covid, covid[10] != "Hospitalizado"))
+```
+
+Resumen estadístico
+========================================
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+
+Sobre este informe:
+
+El resumen que se presenta a continuaión, está elaborado a partir de la información referente a casos de Covid-19 en México generada por la [Secretaría de Salud](https://www.gob.mx/salud) e intenta replicar el tablero estadístico elaborado por [Conacyt](http://www.conacyt.gob.mx/), [CentroGeo](https://www.centrogeo.org.mx/), [GeoInt](http://geoint.mx/) y [DataLab](http://datalab.org.mx/).
+
+Toda la información utilizada en este informe es pública. Está registrada como de [Libre Uso](https://datos.gob.mx/libreusomx) bajo los [Términos de Libre Uso MX](https://datos.gob.mx/libreusomx) de los [Datos Abiertos del Gobierno de México](https://datos.gob.mx/) y es compatible con la [licencia Creative Commons, Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode.es).
+
+Datos disponibles en:
+
+https://datos.gob.mx/busca/dataset/informacion-referente-a-casos-covid-19-en-mexico
+
+Tablero original sobre Covid-19:
+
+https://datos.covid-19.conacyt.mx/
+
+Última actualización: `r format(Sys.Date(), format = "%B %d, %Y")`.
+
+
+Row
+-----------------------------------------------------------------------
+
+### Confirmados
+
+```{r}
+valueBox(n_confirmados, icon="fa-frown", color = "#FF0000")
+```
+
+### Negativos
+
+```{r}
+valueBox(n_negativos, icon="fa-smile", color = "#008000")
+```
+
+### Sospechosos
+
+```{r}
+valueBox(n_sospechosos, icon="fa-question", color = "#FFD700")
+```
+
+### Defunciones
+
+```{r}
+valueBox(n_defunciones, icon="fa-ribbon", color = "#2F4F4F")
+```
+
+
+Row
+-----------------------------------------------------------------------
+
+### Número de casos ambulatorios
+
+```{r}
+valueBox(n_ambulatorios, icon="fa-home", color = "#00CED1")
+```
+
+### Número de casos hospitalizados
+
+```{r}
+valueBox(n_hospitalizados, icon="fa-hospital", color = "#FF6347")
+```
+
+
+Row
+-----------------------------------------------------------------------
+
+### Casos diarios confirmados
+
+```{r}
+tiempo <- data.frame(table(covid$FECHA_SINTOMAS))
+colnames(tiempo) <- c("Fecha","Frecuencia") 
+p_tiempo <- tiempo %>%  
+  ggplot() +
+  geom_line(aes(x=Fecha, y=Frecuencia), color="#67000d") +
+  geom_point(aes(x=Fecha, y=Frecuencia), color="#67000d") +
+  theme(axis.text.x = element_text(angle=90, size=5)) +
+  xlab("Fecha") +
+  ylab("Número de casos confirmados")
+ggplotly(p_tiempo)
+```
+
+
+Row
+-----------------------------------------------------------------------
+
+### Casos confirmados por sexo
+
+```{r}
+Sex<-as.data.frame(covid$SEXO)
+Sexo<-as.data.frame(table(Sex=Sex))
+Sexo$Sex<-as.character(Sexo$Sex)
+Sexo$Freq<-as.numeric(Sexo$Freq)
+colnames(Sexo) <- c("Sexo", "Frecuencia")
+p_sexo <- ggplot(Sexo, aes(x=Sexo, y=Frecuencia, fill=Sexo)) +
+  geom_bar(stat="identity", alpha=.6, width=.4) +
+  scale_fill_brewer(palette = "Set2") +
+  xlab("Sexo") +
+  ylab("Número de casos") +
+  theme_bw()
+ggplotly(p_sexo)
+```
+
+> Fuente: Elaboración propia con datos de la Secretaría de Salud
+
+
+### Distribución porcentual
+
+```{r}
+sex_por <- transform(Sexo, FreqAc = 100*(round(prop.table(Frecuencia),4)))
+ggplot(sex_por, aes(x="", y=FreqAc, fill=Sexo)) +
+  geom_bar(stat="identity") +
+  geom_text(aes(label=FreqAc), position = position_stack(vjust = 0.5)) +
+  scale_fill_brewer(palette = "Set2") +
+  coord_polar("y", start=45) +
+  theme_void()
+```
+
+> Fuente: Elaboración propia con datos de la Secretaría de Salud
+
+
+Row
+-----------------------------------------------------------------------
+
+### Casos diarios confirmados por edad y sexo
+
+```{r}
+c_tiempo <- covid
+c_tiempo <- arrange(c_tiempo, FECHA_SINTOMAS) 
+p_c_tiempo <- ggplot(c_tiempo,aes(x=FECHA_SINTOMAS,fill=SEXO))+
+  geom_bar(position="dodge")+
+  theme(axis.text.x = element_text(angle=90, size=5)) +
+  scale_fill_brewer(palette = "Set2") +
+  xlab("Fecha") +
+  ylab("Número de casos confirmados")
+ggplotly(p_c_tiempo)
+```
+
+
+Row
+-----------------------------------------------------------------------
+
+### Número de casos confirmados por edad
+
+```{r}
+age<-as.data.frame(covid$EDAD)
+Edad<-as.data.frame(table(age))
+Edad$age <- as.numeric(Edad$age)
+Edad <- arrange(Edad, Freq)
+colnames(Edad) <- c("Edad", "Frecuencia")
+p_edad <- Edad %>%  
+  ggplot() +
+  geom_line(aes(x=Edad, y=Frecuencia), color="#67000d") +
+  geom_point(aes(x=Edad, y=Frecuencia), color="#67000d") +
+  xlab("Edad") +
+  ylab("Número de casos confirmados")
+ggplotly(p_edad)
+```
+
+> Fuente: Elaboración propia con datos de la Secretaría de Salud
+
+
+### Número de casos confirmados por rango de edad
+
+```{r}
+age2<- covid$EDAD
+Edad2<- data.frame(table(cut(age2, breaks = 10)))
+colnames(Edad2) <- c("Edad", "Frecuencia")
+p_edad2 <- ggplot(Edad2) +
+  aes(x = Edad, weight = Frecuencia) +
+  geom_bar(fill = "#67000d") +
+  theme(axis.text.x = element_text(angle=90)) +
+  xlab("Rango de edad") +
+  ylab("Número de casos confirmados")
+ggplotly(p_edad2)
+```
+
+> Fuente: Elaboración propia con datos de la Secretaría de Salud
+
+
+Row
+-----------------------------------------------------------------------
+
+### Distribución de casos ambulatorios por edad y sexo
+
+```{r}
+ambulatorios <- filter(covid, covid[10] == "Ambulatorio")
+p_ambulatorios <- ggplot(ambulatorios,aes(x=EDAD,fill=SEXO))+
+  geom_bar(position="dodge")+
+  scale_fill_brewer(palette = "Set2") +
+  xlab("Edad") +
+  ylab("Número de casos ambulatorios")
+ggplotly(p_ambulatorios)
+```
+
+> Fuente: Elaboración propia con datos de la Secretaría de Salud
+
+
+### Distribución de casos hospitalizados por edad y sexo
+
+```{r}
+hospitalizados <- filter(covid, covid[10] != "Ambulatorio")
+p_hospitalizados <- ggplot(hospitalizados,aes(x=EDAD,fill=SEXO))+
+  geom_bar(position="dodge")+
+  scale_fill_brewer(palette = "Set2") +
+  xlab("Edad") +
+  ylab("Número de casos hospitalizados")
+ggplotly(p_hospitalizados)
+```
+
+> Fuente: Elaboración propia con datos de la Secretaría de Salud
+
+
+Row
+-----------------------------------------------------------------------
+
+### Número de defunciones diarias por sexo
+
+```{r}
+muertes_tiempo <- filter(covid, covid[13] != "9999-99-99")
+muertes_tiempo <- arrange(muertes_tiempo, FECHA_DEF) 
+p_defunciones_tiempo <- ggplot(muertes_tiempo,aes(x=FECHA_DEF,fill=SEXO))+
+  geom_bar(position="dodge")+
+  theme(axis.text.x = element_text(angle=90, size=5)) +
+  scale_fill_brewer(palette = "Set2") +
+  xlab("Fecha") +
+  ylab("Número de defunciones")
+ggplotly(p_defunciones_tiempo)
+```
+
+> Fuente: Elaboración propia con datos de la Secretaría de Salud.
+
+
+Row
+-----------------------------------------------------------------------
+
+### Distribución de defunciones por edad y sexo
+
+```{r}
+muertes <- filter(covid, covid[13] != "9999-99-99")
+p_defunciones <- ggplot(muertes,aes(x=EDAD,fill=SEXO))+
+  geom_bar(position="dodge")+
+  scale_fill_brewer(palette = "Set2") +
+  xlab("Edad") +
+  ylab("Número de defunciones")
+ggplotly(p_defunciones)
+```
+
+> Fuente: Elaboración propia con datos de la Secretaría de Salud
+
+
+Créditos
+========================================
+
+Created by: Cesar Hernández
+
+Correo: cghv94@outlook.es
+
+Twitter: @[cghv94](https://twitter.com/cghv94)
+
+Esta obra fue generada mediante R en `r format(Sys.Date(), format = "%B %d, %Y")` y está bajo una [licencia de Creative Commons, Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode.es).
+
+Creative Commons (CC).
